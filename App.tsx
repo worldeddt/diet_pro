@@ -1,33 +1,61 @@
-import * as React from 'react';
-import { Text, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LoginScreen } from './src/components/auth/LoginScreen';
+import { Dashboard } from './src/components/dashboard/Dashboard';
+import { FoodTracker } from './src/components/food/FoodTracker';
+import { ExerciseTracker } from './src/components/exercise/ExerciseTracker';
+import { ProfileSettings } from './src/components/profile/ProfileSettings';
+import {SafeAreaProvider} from "react-native-safe-area-context";
 
-function HomeScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>홈 화면</Text>
-    </View>
-  );
-}
+const queryClient = new QueryClient();
 
-function SettingsScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>사용자 설정 화면 안농</Text>
-    </View>
-  );
-}
-
-const Tab = createBottomTabNavigator();
+type Screen = 'login' | 'dashboard' | 'food' | 'exercise' | 'profile';
 
 export default function App() {
+  const [currentScreen, setCurrentScreen] = useState<Screen>('login');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    setCurrentScreen('dashboard');
+  };
+
+  const handleNavigate = (screen: string) => {
+    setCurrentScreen(screen as Screen);
+  };
+
+  const handleBack = () => {
+    setCurrentScreen('dashboard');
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <LoginScreen onLogin={handleLogin} />
+      </QueryClientProvider>
+    );
+  }
+
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'dashboard':
+        return <Dashboard onNavigate={handleNavigate} />;
+      case 'food':
+        return <FoodTracker onBack={handleBack} />;
+      case 'exercise':
+        return <ExerciseTracker onBack={handleBack} />;
+      case 'profile':
+        return <ProfileSettings onBack={handleBack} />;
+      default:
+        return <Dashboard onNavigate={handleNavigate} />;
+    }
+  };
+
   return (
-    <NavigationContainer>
-      <Tab.Navigator screenOptions={{ headerShown: false }}>
-        <Tab.Screen name="Home" component={HomeScreen} options={{ title: "홈" }} />
-        <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: "설정" }} />
-      </Tab.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        {renderScreen()}
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
