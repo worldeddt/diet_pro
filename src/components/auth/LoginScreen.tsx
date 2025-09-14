@@ -7,29 +7,43 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Mail, Lock, Eye, EyeOff, Apple } from '../ui/Icons';
 import { colors, spacing, fontSizes, createStyles } from '../../lib/utils';
+import authService from '../../services/authService';
 
 interface LoginScreenProps {
+  onNavigate: (screen: string) => void;
   onLogin: () => void;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    // 간단한 로그인 처리 (실제로는 백엔드 연동 필요)
-    console.log('Attempting login with :', email, password)
-    onLogin();
-    // if (email && password) {
-    //
-    // }
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('오류', '이메일과 비밀번호를 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await authService.login(email, password);
+      Alert.alert('성공', '로그인되었습니다!', [
+        { text: '확인', onPress: onLogin }
+      ]);
+    } catch (error) {
+      Alert.alert('오류', error instanceof Error ? error.message : '로그인에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,17 +79,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 label="이메일"
                 placeholder="your@email.com"
                 value={email}
-                onChangeText={setEmail}
                 keyboardType="email-address"
                 leftIcon={<Mail size={16} color={colors.textSecondary} />}
                 style={styles.input}
+                onChangeText={(e) => setPassword(e.toString)}
               />
-              
+
               <Input
                 label="비밀번호"
                 placeholder="비밀번호를 입력하세요"
                 value={password}
-                onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 rightIcon={
                   showPassword ? (
@@ -86,11 +99,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 }
                 onRightIconPress={() => setShowPassword(!showPassword)}
                 style={styles.input}
+                onChangeText={e => setPassword(e.toString)}
               />
 
               <Button
                 title="로그인"
                 onPress={handleLogin}
+                disabled={isLoading}
                 style={styles.loginButton}
               />
 
@@ -111,7 +126,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               <View style={styles.signupSection}>
                 <Text style={styles.signupText}>
                   계정이 없으신가요?{' '}
-                  <Text style={styles.signupLink}>회원가입</Text>
+                  <Text
+                    onPress={() => onNavigate('signUp')}
+                    style={styles.signupLink}
+                  >
+                    회원가입
+                  </Text>
                 </Text>
               </View>
             </CardContent>

@@ -1,33 +1,35 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { Button } from '../ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Progress } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
 import {
-  Target,
-  TrendingUp,
-  Calendar,
-  Plus,
-  Flame,
   Activity,
-  Trophy,
+  Calendar,
   Clock,
-  XCircle,
+  Flame,
   History,
+  Plus,
+  TrendingUp,
+  Trophy,
+  XCircle,
 } from '../ui/Icons';
-import { colors, spacing, fontSizes, createStyles } from '../../lib/utils';
+import { colors, createStyles, fontSizes, spacing } from '../../lib/utils';
 
 interface DashboardProps {
   onNavigate: (screen: string) => void;
+  onLogout: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+function LogOut(props: { size: number; color: string }) {
+  return null;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({
+  onNavigate,
+  onLogout,
+}) => {
   const [todayCalories] = useState({
     consumed: 1250,
     target: 1800,
@@ -45,11 +47,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
   // 지난 다이어트 기록 (다이어트 중이 아닐 때 표시)
   const [pastDietRecords] = useState([
-    { period: '2023년 9월 - 11월', weightLoss: '3kg', duration: '60일', success: true },
-    { period: '2023년 6월 - 7월', weightLoss: '1.5kg', duration: '30일', success: false },
+    {
+      period: '2023년 9월 - 11월',
+      weightLoss: '3kg',
+      duration: '60일',
+      success: true,
+    },
+    {
+      period: '2023년 6월 - 7월',
+      weightLoss: '1.5kg',
+      duration: '30일',
+      success: false,
+    },
   ]);
 
-  const progressPercentage = (todayCalories.consumed / todayCalories.target) * 100;
+  const handleLogout = () => {
+    Alert.alert('로그아웃', '정말 로그아웃하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      { text: '로그아웃', style: 'destructive', onPress: onLogout },
+    ]);
+  };
+
+  const progressPercentage =
+    (todayCalories.consumed / todayCalories.target) * 100;
   const isOnTrack = progressPercentage <= 100;
 
   // D-Day 계산
@@ -79,10 +99,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 목표까지 D-{getDaysRemaining()}일 남았어요!
               </Text>
             ) : (
-              <Text style={styles.headerSubtitle}>새로운 다이어트를 시작해보세요</Text>
+              <Text style={styles.headerSubtitle}>
+                새로운 다이어트를 시작해보세요
+              </Text>
             )}
           </View>
           <View style={styles.headerActions}>
+            <Button
+              title=""
+              onPress={() => onNavigate('profile')}
+              variant="ghost"
+              size="sm"
+              // icon={<Settings size={20} color={colors.white} />}
+              style={styles.settingsButton}
+            />
+            <Button
+              title=""
+              onPress={handleLogout}
+              variant="ghost"
+              size="sm"
+              icon={<LogOut size={50} color={colors.black} />}
+              style={styles.logoutButton}
+            />
             {dietStatus.isOnDiet && (
               <Button
                 title="포기"
@@ -93,14 +131,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 style={styles.giveUpButton}
               />
             )}
-            <Button
-              title=""
-              onPress={() => onNavigate('profile')}
-              variant="ghost"
-              size="sm"
-              icon={<Target size={16} color={colors.white} />}
-              style={styles.profileButton}
-            />
           </View>
         </View>
 
@@ -116,17 +146,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               </View>
               <View style={styles.calorieStats}>
                 <View style={styles.calorieRow}>
-                  <Text style={styles.calorieText}>섭취: {todayCalories.consumed}kcal</Text>
-                  <Text style={styles.calorieText}>목표: {todayCalories.target}kcal</Text>
+                  <Text style={styles.calorieText}>
+                    섭취: {todayCalories.consumed}kcal
+                  </Text>
+                  <Text style={styles.calorieText}>
+                    목표: {todayCalories.target}kcal
+                  </Text>
                 </View>
-                <Progress value={progressPercentage} style={styles.progressBar} />
+                <Progress
+                  value={progressPercentage}
+                  style={styles.progressBar}
+                />
                 <View style={styles.calorieFooter}>
                   <Text style={styles.calorieFooterText}>
-                    남은 칼로리: {todayCalories.target - todayCalories.consumed}kcal
+                    남은 칼로리: {todayCalories.target - todayCalories.consumed}
+                    kcal
                   </Text>
                   <View style={styles.burnedCalories}>
                     <Flame size={12} color={colors.textSecondary} />
-                    <Text style={styles.calorieFooterText}>소모: {todayCalories.burned}kcal</Text>
+                    <Text style={styles.calorieFooterText}>
+                      소모: {todayCalories.burned}kcal
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -147,17 +187,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   <View key={index} style={styles.historyItem}>
                     <View style={styles.historyItemLeft}>
                       <Text style={styles.historyPeriod}>{record.period}</Text>
-                      <Text style={styles.historyDuration}>{record.duration} 동안</Text>
+                      <Text style={styles.historyDuration}>
+                        {record.duration} 동안
+                      </Text>
                     </View>
                     <View style={styles.historyItemRight}>
-                      <Text style={styles.historyWeight}>{record.weightLoss}</Text>
-                      <Badge variant={record.success ? 'secondary' : 'outline'} size="sm">
+                      <Text style={styles.historyWeight}>
+                        {record.weightLoss}
+                      </Text>
+                      <Badge
+                        variant={record.success ? 'secondary' : 'outline'}
+                        size="sm"
+                      >
                         {record.success ? '성공' : '중단'}
                       </Badge>
                     </View>
                   </View>
                 ))}
               </View>
+              <Button
+                title="새 다이어트 계획 만들기"
+                onPress={() => onNavigate('plan')}
+                variant="primary"
+                size="lg"
+                icon={<Plus size={20} color={colors.white} />}
+                style={styles.createPlanButton}
+              />
             </CardContent>
           </Card>
         )}
@@ -177,8 +232,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               style={styles.actionButton}
             />
             <Button
-              title="운동 기록"
-              onPress={() => onNavigate('exercise')}
+              title="체성분 기록"
+              onPress={() => onNavigate('milestone')}
               variant="outline"
               size="lg"
               icon={<Activity size={24} color={colors.primary} />}
@@ -232,7 +287,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
               <View style={styles.mealList}>
                 <View style={styles.mealItem}>
                   <View style={styles.mealItemLeft}>
-                    <View style={[styles.mealDot, { backgroundColor: colors.success }]} />
+                    <View
+                      style={[
+                        styles.mealDot,
+                        { backgroundColor: colors.success },
+                      ]}
+                    />
                     <View>
                       <Text style={styles.mealName}>아침식사</Text>
                       <Text style={styles.mealDescription}>오트밀, 바나나</Text>
@@ -242,10 +302,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </View>
                 <View style={styles.mealItem}>
                   <View style={styles.mealItemLeft}>
-                    <View style={[styles.mealDot, { backgroundColor: colors.warning }]} />
+                    <View
+                      style={[
+                        styles.mealDot,
+                        { backgroundColor: colors.warning },
+                      ]}
+                    />
                     <View>
                       <Text style={styles.mealName}>점심식사</Text>
-                      <Text style={styles.mealDescription}>샐러드, 닭가슴살</Text>
+                      <Text style={styles.mealDescription}>
+                        샐러드, 닭가슴살
+                      </Text>
                     </View>
                   </View>
                   <Text style={styles.mealCalories}>450kcal</Text>
@@ -271,7 +338,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </CardHeader>
             <CardContent>
               <View style={styles.challengeList}>
-                <View style={[styles.challengeItem, { backgroundColor: colors.success }]}>
+                <View
+                  style={[
+                    styles.challengeItem,
+                    { backgroundColor: colors.success },
+                  ]}
+                >
                   <View style={styles.challengeItemLeft}>
                     <Clock size={16} color={colors.white} />
                     <Text style={styles.challengeText}>물 8잔 마시기</Text>
@@ -331,9 +403,16 @@ const styles = createStyles({
   giveUpButton: {
     marginRight: spacing.sm,
   },
-  profileButton: {
+  settingsButton: {
     width: 40,
     height: 40,
+  },
+  logoutButton: {
+    width: 40,
+    height: 40,
+  },
+  createPlanButton: {
+    marginTop: spacing.lg,
   },
   calorieCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',

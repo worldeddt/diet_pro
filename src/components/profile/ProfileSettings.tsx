@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
@@ -20,14 +21,16 @@ import {
   Activity,
   TrendingDown,
   Edit,
+  LogOut,
 } from '../ui/Icons';
 import { colors, spacing, fontSizes, createStyles } from '../../lib/utils';
 
 interface ProfileSettingsProps {
   onBack: () => void;
+  onLogout: () => void;
 }
 
-export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onBack }) => {
+export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onBack, onLogout }) => {
   const [userProfile, setUserProfile] = useState({
     name: '김건강',
     age: 28,
@@ -48,6 +51,17 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onBack }) => {
   const weightProgress = ((userProfile.currentWeight - userProfile.targetWeight) / (72 - userProfile.targetWeight)) * 100;
   const daysInDiet = Math.floor((new Date().getTime() - new Date(userProfile.startDate).getTime()) / (1000 * 3600 * 24));
 
+  const handleLogout = () => {
+    Alert.alert(
+      '로그아웃',
+      '정말 로그아웃하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '로그아웃', style: 'destructive', onPress: onLogout },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* 헤더 */}
@@ -67,6 +81,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onBack }) => {
               다이어트 {daysInDiet}일차
             </Text>
           </View>
+          <Button
+            title=""
+            onPress={handleLogout}
+            variant="ghost"
+            size="sm"
+            icon={<LogOut size={20} color={colors.white} />}
+            style={styles.logoutButton}
+          />
         </View>
       </View>
 
@@ -384,6 +406,10 @@ const styles = createStyles({
     gap: spacing.md,
   },
   backButton: {
+    width: 40,
+    height: 40,
+  },
+  logoutButton: {
     width: 40,
     height: 40,
   },
