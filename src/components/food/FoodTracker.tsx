@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
+  StyleSheet, Alert,
 } from 'react-native';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
@@ -20,9 +20,23 @@ import {
   Moon,
 } from '../ui/Icons';
 import { colors, spacing, fontSizes, createStyles } from '../../lib/utils';
+import axios from "axios";
 
 interface FoodTrackerProps {
   onBack: () => void;
+}
+
+type MealLogPostProps = {
+   planId : number,
+   mealName : string,
+   calories : number,
+   mealType : string, // breakfast, lunch, dinner, snack
+   data : string,
+   mealImages : MealImageProps[]
+}
+
+interface MealImageProps {
+  imageUrl : string
 }
 
 interface FoodEntry {
@@ -40,6 +54,12 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
     { id: '3', name: '닭가슴살 샐러드', calories: 350, time: '12:30', meal: 'lunch' },
     { id: '4', name: '요거트', calories: 100, time: '15:00', meal: 'snack' },
   ]);
+
+  console.log('rendered')
+
+  const [addFoodName, setAddFoodName] = useState<string>("");
+  const [addFoodCalorie, setAddFoodCalorie] = useState<number>(0)
+  const [foodImageUrl, setFoodImageUrl] = useState<string>("")
 
   const [activeTab, setActiveTab] = useState('today');
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +87,34 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
     groups[entry.meal].push(entry);
     return groups;
   }, {} as Record<string, FoodEntry[]>);
+
+  const mealLogPost = () => {
+
+    if (!addFoodCalorie) {
+      Alert.alert('오류', '음식 이름을 입력해 주세요.');
+      return;
+    }
+
+    if (!addFoodCalorie) {
+      Alert.alert('오류', '음식 칼로리를 입력해 주세요.');
+      return;
+    }
+
+    axios.post(`http://localhost:8082/api/meal-logs`, {
+      planId : 1,
+      mealName : addFoodName,
+      calories : addFoodCalorie,
+      mealImages : {
+        imageUrl : foodImageUrl
+      }
+    })
+      .catch(e => {
+        console.error(e)
+      })
+      .then(response => {
+        console.log(response)
+      })
+  }
 
   return (
     <View style={styles.container}>
@@ -102,54 +150,69 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.tabContent}>
                 {/* 식사별 그룹 */}
-                {(['breakfast', 'lunch', 'dinner', 'snack'] as const).map((meal) => {
-                  const entries = groupedEntries[meal] || [];
-                  const mealCalories = entries.reduce((sum, entry) => sum + entry.calories, 0);
-                  const IconComponent = mealIcons[meal];
+                {(['breakfast', 'lunch', 'dinner', 'snack'] as const).map(
+                  meal => {
+                    const entries = groupedEntries[meal] || [];
+                    const mealCalories = entries.reduce(
+                      (sum, entry) => sum + entry.calories,
+                      0,
+                    );
+                    const IconComponent = mealIcons[meal];
 
-                  return (
-                    <Card key={meal} style={styles.mealCard}>
-                      <CardHeader style={styles.mealCardHeader}>
-                        <View style={styles.mealHeader}>
-                          <View style={styles.mealHeaderLeft}>
-                            <IconComponent size={20} color={colors.primary} />
-                            <Text style={styles.mealTitle}>{mealNames[meal]}</Text>
+                    return (
+                      <Card key={meal} style={styles.mealCard}>
+                        <CardHeader style={styles.mealCardHeader}>
+                          <View style={styles.mealHeader}>
+                            <View style={styles.mealHeaderLeft}>
+                              <IconComponent size={20} color={colors.primary} />
+                              <Text style={styles.mealTitle}>
+                                {mealNames[meal]}
+                              </Text>
+                            </View>
+                            <Badge variant="secondary">
+                              {mealCalories}kcal
+                            </Badge>
                           </View>
-                          <Badge variant="secondary">
-                            {mealCalories}kcal
-                          </Badge>
-                        </View>
-                      </CardHeader>
-                      <CardContent>
-                        {entries.length > 0 ? (
-                          <View style={styles.mealEntries}>
-                            {entries.map((entry) => (
-                              <View key={entry.id} style={styles.mealEntry}>
-                                <View style={styles.mealEntryLeft}>
-                                  <Text style={styles.mealEntryName}>{entry.name}</Text>
-                                  <Text style={styles.mealEntryTime}>{entry.time}</Text>
+                        </CardHeader>
+                        <CardContent>
+                          {entries.length > 0 ? (
+                            <View style={styles.mealEntries}>
+                              {entries.map(entry => (
+                                <View key={entry.id} style={styles.mealEntry}>
+                                  <View style={styles.mealEntryLeft}>
+                                    <Text style={styles.mealEntryName}>
+                                      {entry.name}
+                                    </Text>
+                                    <Text style={styles.mealEntryTime}>
+                                      {entry.time}
+                                    </Text>
+                                  </View>
+                                  <Text style={styles.mealEntryCalories}>
+                                    {entry.calories}kcal
+                                  </Text>
                                 </View>
-                                <Text style={styles.mealEntryCalories}>{entry.calories}kcal</Text>
-                              </View>
-                            ))}
-                          </View>
-                        ) : (
-                          <View style={styles.emptyMeal}>
-                            <Text style={styles.emptyMealText}>아직 기록된 음식이 없습니다</Text>
-                            <Button
-                              title="추가하기"
-                              onPress={() => setActiveTab('add')}
-                              variant="outline"
-                              size="sm"
-                              icon={<Plus size={16} color={colors.primary} />}
-                              style={styles.addMealButton}
-                            />
-                          </View>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                              ))}
+                            </View>
+                          ) : (
+                            <View style={styles.emptyMeal}>
+                              <Text style={styles.emptyMealText}>
+                                아직 기록된 음식이 없습니다
+                              </Text>
+                              <Button
+                                title="추가하기"
+                                onPress={() => setActiveTab('add')}
+                                variant="outline"
+                                size="sm"
+                                icon={<Plus size={16} color={colors.primary} />}
+                                style={styles.addMealButton}
+                              />
+                            </View>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  },
+                )}
               </View>
             </ScrollView>
           </TabsContent>
@@ -170,10 +233,12 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
                       placeholder="음식명 검색..."
                       value={searchQuery}
                       onChangeText={setSearchQuery}
-                      leftIcon={<Search size={16} color={colors.textSecondary} />}
+                      leftIcon={
+                        <Search size={16} color={colors.textSecondary} />
+                      }
                       style={styles.searchInput}
                     />
-                    
+
                     <Button
                       title="사진으로 음식 인식하기"
                       onPress={() => {}}
@@ -222,20 +287,26 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
                         label="음식명"
                         placeholder="예: 김치찌개"
                         value=""
-                        onChangeText={() => {}}
+                        onChangeText={e => {
+                          setAddFoodName(e);
+                        }}
                         style={styles.manualInputField}
                       />
                       <Input
                         label="칼로리"
                         placeholder="300"
                         value=""
-                        onChangeText={() => {}}
+                        onChangeText={e => {
+                          setAddFoodCalorie(e);
+                        }}
                         keyboardType="numeric"
                         style={styles.manualInputField}
                       />
                       <Button
                         title="기록 추가"
-                        onPress={() => {}}
+                        onPress={() => {
+                          mealLogPost();
+                        }}
                         style={styles.addButton}
                       />
                     </View>

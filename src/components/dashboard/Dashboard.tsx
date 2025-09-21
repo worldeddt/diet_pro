@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import {Alert, ScrollView, Settings, Text, View} from 'react-native';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Progress } from '../ui/Progress';

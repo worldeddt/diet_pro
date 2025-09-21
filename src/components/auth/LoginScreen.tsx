@@ -82,7 +82,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin })
                 keyboardType="email-address"
                 leftIcon={<Mail size={16} color={colors.textSecondary} />}
                 style={styles.input}
-                onChangeText={(e) => setPassword(e.toString)}
+                onChangeText={e => {
+                  console.log(e);
+                  setEmail(e)
+                }}
               />
 
               <Input
@@ -99,7 +102,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigate, onLogin })
                 }
                 onRightIconPress={() => setShowPassword(!showPassword)}
                 style={styles.input}
-                onChangeText={e => setPassword(e.toString)}
+                onChangeText={e => setPassword(e)}
               />
 
               <Button
