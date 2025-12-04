@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import {
   View,
   Text,
   ScrollView,
-  StyleSheet, Alert,
+  StyleSheet,
+  Alert,
+  Modal,
+  Image,
 } from 'react-native';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
@@ -21,6 +25,7 @@ import {
 } from '../ui/Icons';
 import { colors, spacing, fontSizes, createStyles } from '../../lib/utils';
 import axios from "axios";
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 
 interface FoodTrackerProps {
   onBack: () => void;
@@ -63,6 +68,57 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
 
   const [activeTab, setActiveTab] = useState('today');
   const [searchQuery, setSearchQuery] = useState('');
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<CameraType>('back');
+  const cameraRef = useRef<ComponentRef<typeof CameraView> | null>(null);
+  const [capturing, setCapturing] = useState(false);
+
+  const handleCameraLaunch = useCallback(async () => {
+    try {
+      if (!cameraPermission?.granted) {
+        const permission = await requestCameraPermission();
+        if (!permission.granted) {
+          Alert.alert(
+            '카메라 권한 필요',
+            '사진 인식을 위해 카메라 접근 권한이 필요합니다.'
+          );
+          return;
+        }
+      }
+      setIsCameraOpen(true);
+    } catch (error) {
+      console.error('카메라 권한 요청 실패', error);
+      Alert.alert('오류', '카메라 권한 요청 중 문제가 발생했습니다. 다시 시도해 주세요.');
+    }
+  }, [cameraPermission, requestCameraPermission]);
+
+  const handleTakePicture = useCallback(async () => {
+    if (!cameraRef.current) {
+      return;
+    }
+
+    try {
+      setCapturing(true);
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.7,
+      });
+
+      if (photo?.uri) {
+        setFoodImageUrl(photo.uri);
+        setIsCameraOpen(false);
+      }
+    } catch (error) {
+      console.error('사진 촬영 실패', error);
+      Alert.alert('오류', '사진 촬영에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      setCapturing(false);
+    }
+  }, [setFoodImageUrl, setIsCameraOpen]);
+
+  const toggleCameraFacing = useCallback(() => {
+    setCameraFacing(prev => (prev === 'back' ? 'front' : 'back'));
+  }, []);
 
   const mealIcons = {
     breakfast: Coffee,
@@ -117,7 +173,45 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <>
+      <Modal
+        visible={isCameraOpen}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setIsCameraOpen(false)}
+      >
+        <View style={styles.cameraModal}>
+          <CameraView
+            style={styles.cameraView}
+            facing={cameraFacing}
+            ref={ref => {
+              cameraRef.current = ref;
+            }}
+          />
+          <View style={styles.cameraControls}>
+            <Button
+              title="닫기"
+              onPress={() => setIsCameraOpen(false)}
+              variant="ghost"
+              style={styles.cameraControlButton}
+            />
+            <Button
+              title={cameraFacing === 'back' ? '전면 전환' : '후면 전환'}
+              onPress={toggleCameraFacing}
+              variant="outline"
+              style={styles.cameraControlButton}
+            />
+            <Button
+              title="촬영"
+              onPress={handleTakePicture}
+              loading={capturing}
+              style={styles.cameraCaptureButton}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
@@ -241,11 +335,22 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
 
                     <Button
                       title="사진으로 음식 인식하기"
-                      onPress={() => {}}
+                      onPress={handleCameraLaunch}
                       variant="outline"
                       icon={<Camera size={16} color={colors.primary} />}
                       style={styles.cameraButton}
                     />
+                    {foodImageUrl ? (
+                      <View style={styles.cameraPreview}>
+                        <Image
+                          source={{ uri: foodImageUrl }}
+                          style={styles.cameraPreviewImage}
+                        />
+                        <Text style={styles.cameraPreviewText}>
+                          최근에 촬영한 사진이 저장되었습니다.
+                        </Text>
+                      </View>
+                    ) : null}
                   </CardContent>
                 </Card>
 
@@ -296,8 +401,9 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
                         label="칼로리"
                         placeholder="300"
                         value=""
-                        onChangeText={e => {
-                          setAddFoodCalorie(e);
+                        onChangeText={value => {
+                          const numericValue = Number(value);
+                          setAddFoodCalorie(Number.isNaN(numericValue) ? 0 : numericValue);
                         }}
                         keyboardType="numeric"
                         style={styles.manualInputField}
@@ -318,6 +424,7 @@ export const FoodTracker: React.FC<FoodTrackerProps> = ({ onBack }) => {
         </Tabs>
       </View>
     </View>
+    </>
   );
 };
 
@@ -447,5 +554,40 @@ const styles = createStyles({
   },
   addButton: {
     marginTop: spacing.sm,
+  },
+  cameraModal: {
+    flex: 1,
+    backgroundColor: colors.black,
+  },
+  cameraView: {
+    flex: 1,
+  },
+  cameraControls: {
+    position: 'absolute',
+    bottom: spacing.xl,
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  cameraControlButton: {
+    flex: 1,
+  },
+  cameraCaptureButton: {
+    flex: 1,
+  },
+  cameraPreview: {
+    marginTop: spacing.md,
+    gap: spacing.xs,
+  },
+  cameraPreviewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  cameraPreviewText: {
+    fontSize: fontSizes.sm,
+    color: colors.textSecondary,
   },
 });
