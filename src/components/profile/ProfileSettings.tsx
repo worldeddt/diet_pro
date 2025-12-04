@@ -1,29 +1,26 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { Button } from '../ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/Card';
 import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import {
   ArrowLeft,
-  User,
-  Target,
   Calendar,
-  Scale,
-  Activity,
-  TrendingDown,
   Edit,
-  LogOut,
+  Scale,
+  Target,
+  TrendingDown,
+  User,
 } from '../ui/Icons';
-import { colors, spacing, fontSizes, createStyles } from '../../lib/utils';
+import { colors, createStyles, fontSizes, spacing } from '../../lib/utils';
 
 interface ProfileSettingsProps {
   onBack: () => void;
@@ -86,7 +83,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ onBack, onLogo
             onPress={handleLogout}
             variant="ghost"
             size="sm"
-            icon={<LogOut size={20} color={colors.white} />}
+            // icon={<LogOut size={20} color={colors.white} />}
             style={styles.logoutButton}
           />
         </View>

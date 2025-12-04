@@ -95,3 +95,17 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+## UI 테스트 시나리오: 음식 인식 카메라
+
+1. 앱을 실행한 뒤 `음식 기록` 화면에서 `음식 추가` 탭으로 이동합니다.
+2. `사진으로 음식 인식하기` 버튼을 누르면 카메라 권한 팝업이 표시되는지 확인하고, `허용`을 선택합니다.
+3. 권한을 허용하면 전체 화면 카메라 뷰가 열리고, 상단에 닫기/전환/촬영 컨트롤이 나타나는지 확인합니다.
+4. 촬영 버튼을 누른 뒤 미리보기 카드에 방금 촬영한 이미지가 표시되는지 확인합니다.
+5. 닫기 버튼으로 카메라 화면이 정상적으로 닫히는지, 다시 버튼을 눌렀을 때 카메라가 재진입되는지 확인합니다.
+
+## 네이티브 재빌드 가이드
+
+- iOS: `cd ios && pod install` 실행 후 Xcode에서 클린 빌드 또는 `npx react-native run-ios`.
+- Android: `./gradlew clean` 후 `npx react-native run-android`로 재빌드.
+- 변경 사항 적용 뒤 앱을 완전히 재시작해야 `expo-camera` 네이티브 모듈이 정상 로딩됩니다.
